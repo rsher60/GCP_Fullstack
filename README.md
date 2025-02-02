@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# GCP_Fullstack
-=======
+
 # GCP_Fullstack
 
 
