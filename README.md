@@ -37,4 +37,4 @@ These commands will create a docker image that can be deployed from CLoud Run UI
 1) Modifiy and add the code to do preprocessing and label encoding on the app side
 2) Add the code for UI in the fastapi 
 3) Work on the CI/CD aspect with cloud build
->>>>>>> 488888f (Files for building out a barebones setup.)
+
