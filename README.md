@@ -29,7 +29,9 @@ These commands will create a docker image that can be deployed from CLoud Run UI
 ``` gcloud run deploy demo-flask-app --image gcr.io/udemy-mlops-395416/demo-flask-app --region us-central1```
 
 
+##For Cloudbuild:
 
+1) you need to create a repository in advance.
 
 ## TODO 
 
