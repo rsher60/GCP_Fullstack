@@ -7,7 +7,7 @@ import os
 
 
 app = FastAPI()
-
+#added code
 @app.get('/predict')
 #instances will be an input but hardcoding for now.
 def endpoint_predict_sample(
