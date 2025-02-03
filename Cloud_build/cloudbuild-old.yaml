@@ -1,0 +1,24 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/copper-index-447603-b3/ml-flask-app/ml-flask-app:tag1', '.']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/copper-index-447603-b3/ml-flask-app/ml-flask-app:tag1']
+
+
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+   - 'run'
+   - 'deploy'
+   - 'ml-flask-app'
+   - '--image'
+   - 'us-central1-docker.pkg.dev/copper-index-447603-b3/ml-flask-app/ml-flask-app:tag1'
+   - '--region'
+   - 'us-central1'
+   - '--allow-unauthenticated'
+images:
+- 'us-central1-docker.pkg.dev/copper-index-447603-b3/ml-flask-app/ml-flask-app:tag1'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
