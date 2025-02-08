@@ -1,0 +1,9 @@
+google-cloud-bigquery
+pandas
+pyarrow
+pandas
+google-cloud-aiplatform
+weaviate-client
+openai
+functions_framework
+google-cloud-storage

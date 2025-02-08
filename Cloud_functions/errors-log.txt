@@ -1,0 +1,5 @@
+ERROR: (gcloud.functions.deploy) ResponseError: status=[403], code=[Ok], message=[Validation failed for trigger projects/copper-index-447603-b3/locations/us-central1/triggers/summarise-image-698514: Permission "storage.buckets.get" denied on "Bucket \"cloud-func-trigger\" could not be validated. Please verify that the bucket exists and that the Eventarc service account has permission."]
+
+
+When I redeployed with a 4gb memory, it ran fine but for some reason default was 256 MB
+
