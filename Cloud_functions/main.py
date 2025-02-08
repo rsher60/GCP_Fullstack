@@ -34,9 +34,9 @@ def access_secret(secret_id):
 
 
 # Replace with your project ID, bucket name, and blob name (image file name).
-project_id = "copper-index-447603-b3"  # your-project-id
-bucket_name = "ai-image-cloudfn"  # your-gcs-bucket-name
-blob_name = "CamScanner Answer.jpg"  # path/to/image/in/bucket.jpg
+project_id = "<PROJECT-NAME>"  # your-project-id
+bucket_name = "<BUCKET-NAME>"  # your-gcs-bucket-name
+
 
 vertexai.init(project=project_id, location="us-east1")
 model = GenerativeModel(model_name="gemini-1.0-pro-vision-001")
