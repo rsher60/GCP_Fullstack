@@ -7,3 +7,4 @@ weaviate-client
 openai
 functions_framework
 google-cloud-storage
+google-cloud-secret-manager

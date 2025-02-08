@@ -5,35 +5,32 @@ from io import BytesIO
 from vertexai.generative_models import Part, Image, GenerativeModel
 import weaviate
 import warnings
+
 warnings.filterwarnings("ignore")
 import weaviate.classes as wvc
 import openai
 import functions_framework
-
+from cloudevents.http import CloudEvent
 import vertexai
 from io import BytesIO
 from vertexai.generative_models import Part, GenerativeModel
 from google.cloud import storage
 
-"""
-image_path = "https://i.natgeofe.com/n/548467d8-c5f1-4551-9f58-6817a8d2c45e/NationalGeographic_2572187_square.jpg" # this link is an example
-response = requests.get(image_path)
-im_bytes = BytesIO(response.content)
-image_part = Part.from_data(
-    im_bytes.getvalue(),
-    mime_type='image/jpeg'
-)
+from google.cloud import secretmanager
 
-vertexai.init(project="copper-index-447603-b3", location="us-central1") # Don't forget to set these
-model = GenerativeModel(model_name="gemini-1.0-pro-vision-001")
+# Access secrets from Google Secret Manager
+client = secretmanager.SecretManagerServiceClient()
 
-query = "Please describe the image."
-response = model.generate_content(
-    [image_part, query]
-)
 
-"""
+def access_secret(secret_id):
+    """Access the payload for the given secret version if one exists. The version
+    can be a version number as a string (e.g. "5") or an alias (e.g. "latest").
+    """
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
 
+    response = client.access_secret_version(request={"name": name})
+    payload = response.payload.data.decode("UTF-8")
+    return payload
 
 
 # Replace with your project ID, bucket name, and blob name (image file name).
@@ -47,6 +44,10 @@ model = GenerativeModel(model_name="gemini-1.0-pro-vision-001")
 # Initialize a GCS client
 storage_client = storage.Client(project=project_id)
 
+weaviate_url_secret_id = "weaviate_url"
+weaviate_api_key_secret_id = "weaviate_api_key"
+openai_api_key_secret_id = "openai_api_key"
+
 
 def list_blobs(bucket_name):
     """Lists all the blobs in the bucket."""
@@ -59,127 +60,109 @@ def list_blobs(bucket_name):
     blob_list = []
     # Note: The call returns a response only when the iterator is consumed.
     for blob in blobs:
-        #print(blob.name)
+        # print(blob.name)
         blob_list.append(blob.name)
     return blob_list
 
 
 @functions_framework.cloud_event
-def summarise_image(cloud_event):
-    file_name = []
-    image_summary = []
-    for i in list_blobs(bucket_name):
+def process_and_upload_image_summaries(cloud_event: CloudEvent):
+    """
+    Summarizes images from a GCS bucket, uploads the summaries to Weaviate, and returns the total count.
 
+    Args:
+        bucket_name: The name of the GCS bucket containing the images.
+        weaviate_url_secret_id: Secret ID for the Weaviate URL.
+        weaviate_api_key_secret_id: Secret ID for the Weaviate API key.
+        openai_api_key_secret_id: Secret ID for the OpenAI API key.
+        access_secret: Callable function to retrieve secrets.
+
+    Returns:
+        The total count of uploaded image summaries.
+    """
+
+    file_names = []
+    image_summaries = []
+    data = cloud_event.data
+
+    event_id = cloud_event["id"]
+    event_type = cloud_event["type"]
+
+    bucket_name = data["bucket"]
+
+    for blob_name in list_blobs(bucket_name):  # Directly iterate over blob names
         try:
-            # Get the bucket
             bucket = storage_client.bucket(bucket_name)
-            # Get the blob (image file)
-            blob = bucket.blob(i)
-            # Download the image data as bytes
-            im_bytes = BytesIO(blob.download_as_bytes())
-            file_name.append(i)
+            blob = bucket.blob(blob_name)
+            image_bytes = BytesIO(blob.download_as_bytes())
+            file_names.append(blob_name)
 
             image_part = Part.from_data(
-                im_bytes.getvalue(),
-                mime_type='image/png'  # Adjust mime_type if necessary (e.g., 'image/png')
+                image_bytes.getvalue(),
+                mime_type='image/png'
             )
 
-            query = "Generate a detailed summary of this image for a blind person"
             response = model.generate_content(
-                [image_part, query]
+                [image_part, "Generate a detailed summary of this image for a blind person"]
             )
 
-            for candidate in response.candidates:
-                #print(f"Response: {candidate.text}")
-                image_summary.append(candidate.text)
-
+            image_summaries.append(response.candidates[0].text)  # Take the first candidate
 
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error processing {blob_name}: {e}")  # More informative error message
+            # Consider adding more robust error handling, e.g., retrying or logging
 
+    df = pd.DataFrame({'file_names': file_names, 'image_summary': image_summaries})
 
-    df = pd.DataFrame()
-    df['file_names'] = file_name
-    df['image_summary'] = image_summary
+    # Access secrets only once, after processing all images and before Weaviate interaction
 
+    weaviate_url = access_secret(weaviate_url_secret_id)
+    weaviate_api_key = access_secret(weaviate_api_key_secret_id)
+    openai.api_key = access_secret(openai_api_key_secret_id)  # Assuming openai is imported
+    
+    
 
-    if len(df['file_names']) == len(df['image_summary']):
-        print(df['image_summary'])
+    headers = {"X-OpenAI-Api-Key": openai.api_key}
 
+    try:
+        with weaviate.connect_to_wcs(
+                cluster_url=weaviate_url,
+                auth_credentials=weaviate.auth.AuthApiKey(weaviate_api_key),
+                headers=headers,
+                skip_init_checks=True  # Remove this for initial testing
+        ) as client:
+            # No need to call client.connect() explicitly within the 'with' block
+            print("Weaviate connection successful:", client.is_ready())
 
-
-    # Weaviate Entrypoint
-
-    weaviate_url = "https://r4hyygvpruakgmjjvuktgq.c0.us-east1.gcp.weaviate.cloud"
-    weaviate_api_key = "yh3c2c2PV24m8OcjEcmK4zUgnbM0YHxHJiXi"
-    openai.api_key ="sk-proj-bNSscy3CEhnZuHXwmtkTT3BlbkFJTaCScwqrSKH0g8P6ALwW"
-    headers = {
-        "X-OpenAI-Api-Key": openai.api_key,
-    }
-
-
-
-    with weaviate.connect_to_wcs(
-        cluster_url=weaviate_url,  # Replace with your Weaviate Cloud URL
-        auth_credentials=weaviate.auth.AuthApiKey(weaviate_api_key),  # Replace with your Weaviate Cloud key
-        headers=headers,
-        skip_init_checks=True
-    ) as client:  # Use this context manager to ensure the connection is closed
-        print(client.is_ready())
-
-    client.connect()
-
-    client.collections.delete("Image_summaries_gcloud_functions")
-    image_summaries = client.collections.create(
-            "Image_summaries_gcloud_functions",
-            vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_openai(),
-            properties=[
-            wvc.config.Property(
-                name="file_names",
-                data_type=wvc.config.DataType.TEXT,
-                vectorize_property_name=False
-            ),
-            wvc.config.Property(
-                name="image_summary",
-                data_type=wvc.config.DataType.TEXT,
-                vectorize_property_name=False
-            ),
-
-        ],
-        # Configure the vector index
-        vector_index_config=wvc.config.Configure.VectorIndex.hnsw(  # Or `flat` or `dynamic`
-            distance_metric=wvc.config.VectorDistances.COSINE,
-            quantizer=wvc.config.Configure.VectorIndex.Quantizer.bq(),
-        ),
-    )
-
-    #Ensure all the columns are string and fillna
-
-    knowledge_base = []
-    for idx, row in df.iterrows():
-        knowledge_base.append({
-            'file_names': str(row['file_names']),
-            'image_summary': str(row['image_summary']),
-        })
-
-
-#This will be part of the script that uses the LLM. You need to make the connection with the gemini
-
-    classs = client.collections.get("Image_summaries_gcloud_functions")
-    with classs.batch.dynamic() as batch:
-        for i in knowledge_base[:5000]:
-            batch.add_object(
-                properties=i
+            client.collections.delete(
+                "Image_summaries_gcloud_functions")  # Consider a different collection name each time? Avoids accumulation
+            image_summaries_collection = client.collections.create(  # More descriptive variable name
+                "Image_summaries_gcloud_functions",  # Consider a more descriptive or parameterized collection name
+                vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_openai(),
+                properties=[
+                    wvc.config.Property(name="file_names", data_type=wvc.config.DataType.TEXT,
+                                        vectorize_property_name=False),
+                    wvc.config.Property(name="image_summary", data_type=wvc.config.DataType.TEXT,
+                                        vectorize_property_name=False),
+                ],
+                vector_index_config=wvc.config.Configure.VectorIndex.hnsw(
+                    distance_metric=wvc.config.VectorDistances.COSINE,
+                    quantizer=wvc.config.Configure.VectorIndex.Quantizer.bq(),
+                ),
             )
 
-    aggregation = image_summaries.aggregate.over_all(total_count=True)
-    print(aggregation.total_count)
+            with image_summaries_collection.batch.dynamic() as batch:  # Use the collection variable
+                for _, row in df.iterrows():
+                    batch.add_object(properties={
+                        'file_names': str(row['file_names']),  # str() conversion already handled in DataFrame creation
+                        'image_summary': str(row['image_summary']),
+                    })
 
-    #Query the collection
-    response = classs.query.bm25(
-        query="sample question paperz",
-        limit=3
-    )
+            aggregation = image_summaries_collection.aggregate.over_all(total_count=True)  # Use the collection variable
+            return aggregation.total_count
 
-    for o in response.objects:
-        print(o.properties)
+    except Exception as e:
+        print(f"Error interacting with Weaviate: {e}")
+        return 0  # or raise the exception depending on your needs
+
+
