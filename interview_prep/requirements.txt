@@ -1,0 +1,120 @@
+## Schema design
+
+
+1) How would you design a schema for a multi-modal dataset (e.g., images and text) in Weaviate? Discuss considerations for performance and querying.
+
+
+
+
+
+
+
+Explain the difference between text2vec-* and img2vec-* vectorizers. When would you choose one over the other?
+What are the trade-offs of using the invertedIndexConfig settings indexNullState and indexPropertyLength? When are they most useful?
+Describe the impact of different vectorIndexConfig settings, such as efConstruction and maxConnections, on indexing speed, query latency, and recall.
+How would you model relationships between objects in Weaviate using cross-references? Discuss different strategies for handling cardinality (one-to-one, one-to-many, many-to-many).
+How would you handle data versioning or auditing within Weaviate? Consider both schema changes and object content changes.
+What strategies would you employ to handle schema evolution in a production environment with minimal downtime? (e.g., adding new properties, changing data types).
+Explain the difference between HNSW and flat vector indexing algorithms in Weaviate. When would you choose one over the other? What are their performance characteristics?
+You have a class with a string property that contains URLs. How would you efficiently search for objects containing a specific domain name within that URL property?
+How can you improve the recall on a large dataset when searching with hybrid search? What are the tradeoffs?
+How would you model hierarchical data structures within Weaviate (e.g., categories and subcategories)?
+How do you define the moduleConfig in a Weaviate schema? Give an example of how it's used for a specific module.
+What are the limitations of using the text2vec-contextionary module? How does it compare to more modern text vectorizers?
+Explain the difference between using bm25 and vector search alone and when you might want to use hybrid search.
+How would you ensure data consistency when importing data from multiple sources into Weaviate?
+What are the implications of choosing a high or low dimensionality for your vectors? How does this affect performance and accuracy?
+Describe a scenario where you would use the PhoneNumber data type in Weaviate. What are the benefits?
+How can you use Weaviate's schema to enforce data quality and validation rules during ingestion?
+How do you decide which properties should be indexed in Weaviate? What factors influence this decision?
+How can you use multi2vec-* modules and when would you use it?
+Querying & Search (20 questions):
+
+Explain the difference between nearVector, nearObject, and nearText search operators. Provide use cases for each.
+How can you filter search results based on metadata properties in Weaviate? Demonstrate using both equality and range filters.
+Describe how to use GraphQL Get and Aggregate queries in Weaviate. Provide examples of complex aggregations.
+How do you implement pagination in Weaviate queries to efficiently retrieve large result sets?
+Explain the purpose of the withSearch operator and how it impacts query performance.
+How can you use the Explore operator to discover related objects based on vector similarity?
+How would you optimize a slow-running GraphQL query in Weaviate? Describe your troubleshooting process.
+How can you implement faceted search in Weaviate to allow users to refine their search results based on categories or attributes?
+How does Weaviate handle stemming and stop words during text-based searches? Can you customize this behavior?
+How would you implement a "more like this" feature using Weaviate, allowing users to find similar objects to a selected item?
+Explain the purpose of the certainty parameter in nearVector and nearObject searches. How does it affect the results?
+How can you combine vector search with full-text search in Weaviate to leverage the strengths of both approaches?
+How can you weight different properties in a nearText search to influence the ranking of results?
+Describe how to use Weaviate's "grouping" functionality to cluster similar objects together.
+How would you use the ask operator, and what modules do you need?
+What are the limitations of using nearText with a large corpus of text? How can you mitigate these limitations?
+How can you use the nearImage operator to search for images similar to a given image? What are the prerequisites?
+Explain the difference between using cosineSimilarity and l2-norm for measuring vector similarity in Weaviate.
+How can you use Weaviate's scoring mechanisms to boost or penalize certain objects in search results?
+How would you implement a recommendation system using Weaviate's vector search capabilities?
+Data Ingestion & Management (15 questions):
+
+Describe different methods for importing data into Weaviate (e.g., REST API, batch import, streaming import). What are the trade-offs of each?
+How would you handle data deduplication during the import process?
+How can you monitor the progress of a large data import job?
+Explain the concept of "batching" in Weaviate and how it improves import performance. What are the best practices for batch size?
+How do you handle errors and retries during data import?
+How can you update existing objects in Weaviate? Describe different update strategies (replace, merge).
+How can you delete objects from Weaviate based on specific criteria?
+Describe the process of backing up and restoring a Weaviate instance.
+How can you efficiently re-index your data in Weaviate after a schema change or vectorizer update?
+How do you deal with conflicts in data when importing from multiple sources?
+How would you implement a data pipeline that automatically updates Weaviate with new data on a regular basis?
+What are the considerations for handling large binary data (e.g., images, videos) in Weaviate?
+Explain how to use the references property to create connections between objects during data import.
+How would you monitor the resource utilization (CPU, memory, disk) of your Weaviate instance during data ingestion?
+How do you ensure data integrity during the import process, especially when dealing with large volumes of data?
+Scalability & Performance (20 questions):
+
+How does Weaviate's architecture support horizontal scaling? Describe the different components and their roles.
+How can you monitor the performance of your Weaviate cluster in a production environment? What metrics are important to track?
+How do you configure replication and sharding in Weaviate to ensure high availability and fault tolerance?
+Explain the concept of "vector index rebuilds" in Weaviate. How often should they be performed, and how can you minimize their impact on performance?
+How would you optimize the performance of Weaviate for a read-heavy workload? What about a write-heavy workload?
+Describe the impact of different hardware configurations (CPU, memory, storage) on Weaviate performance.
+How do you troubleshoot performance bottlenecks in Weaviate? What tools and techniques do you use?
+How can you use caching to improve query latency in Weaviate?
+Explain the role of the distance metric in Weaviate's vector search. How does it affect performance?
+How do you configure resource limits (CPU, memory) for Weaviate containers in a Kubernetes environment?
+How does Weaviate handle concurrent read and write operations? What concurrency control mechanisms are in place?
+How can you use Weaviate's profiling tools to identify performance hotspots in your queries?
+How would you design a load testing strategy for Weaviate to evaluate its performance under different workloads?
+How do you manage disk space usage in Weaviate, especially when dealing with large vector indexes?
+Explain the relationship between the number of shards and the query performance in Weaviate.
+How can you optimize the indexing process for large datasets to minimize the indexing time?
+Describe how you would use a service mesh (e.g., Istio) with Weaviate to improve security and observability.
+What are the best practices for configuring the JVM (if applicable) for Weaviate to optimize performance?
+How can you use Weaviate's distributed tracing capabilities to track requests across multiple nodes?
+How do you choose the optimal number of replicas for your Weaviate cluster based on your availability requirements?
+Security & Operations (15 questions):
+
+How do you configure authentication and authorization in Weaviate? Describe different authentication methods (e.g., API keys, OIDC).
+How can you implement role-based access control (RBAC) in Weaviate to restrict access to sensitive data?
+How do you encrypt data at rest and in transit in Weaviate?
+How can you audit access to Weaviate data and track user activity?
+Describe how to configure network policies to restrict access to Weaviate from specific IP addresses or networks.
+How do you manage secrets (e.g., API keys, passwords) used by Weaviate in a secure manner?
+How do you monitor the security posture of your Weaviate cluster? What security metrics are important to track?
+How do you handle security vulnerabilities and patches in Weaviate?
+Describe your experience with deploying and managing Weaviate in a Kubernetes environment.
+How do you configure logging and alerting for Weaviate to detect and respond to issues proactively?
+How do you perform rolling updates of Weaviate in a production environment with minimal downtime?
+How do you integrate Weaviate with your existing monitoring and logging infrastructure (e.g., Prometheus, Grafana, ELK stack)?
+How do you handle disaster recovery and business continuity for your Weaviate deployment?
+What are the best practices for securing the Weaviate API endpoint?
+How do you handle data privacy and compliance regulations (e.g., GDPR, CCPA) when using Weaviate?
+Weaviate Modules (10 questions):
+
+Explain the purpose and functionality of the text2vec-transformers module. How does it differ from text2vec-contextionary?
+How would you use the generative-openai module to generate text based on data stored in Weaviate?
+Describe how to configure and use the qna-openai module to answer questions based on your data.
+How can you extend Weaviate's functionality by developing your own custom modules?
+How do you manage dependencies and versioning for Weaviate modules?
+How do you deploy and manage Weaviate modules in a production environment?
+Explain how the ref2vec-centroid module works and what it is useful for.
+What is the purpose of the backup-filesystem module? How can it be used to backup and restore your Weaviate data?
+How can you chain modules together to perform complex data processing tasks in Weaviate?
+Describe how you would use the ner-transformers module to extract named entities from text data stored in Weaviate.

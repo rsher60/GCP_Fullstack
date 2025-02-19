@@ -3,3 +3,4 @@ ERROR: (gcloud.functions.deploy) ResponseError: status=[403], code=[Ok], message
 
 When I redeployed with a 4gb memory, it ran fine but for some reason default was 256 MB
 
+I got error on Harm category, Qouta limit exceeding with vision pro (429's)
